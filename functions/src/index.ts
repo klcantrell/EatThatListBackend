@@ -36,16 +36,16 @@ export const processSignUp = functions.auth.user().onCreate(async user => {
     },
   };
 
-  await sendGraphqlRequest(graphqlInsertUserRequest);
+  try {
+    await sendGraphqlRequest(graphqlInsertUserRequest);
 
-  return admin
-    .auth()
-    .setCustomUserClaims(user.uid, customClaims)
-    .then(() => {
-      const metadataRef = admin.database().ref(`metadata/${user.uid}`);
-      return metadataRef.set({ refreshTime: new Date().getTime() });
-    })
-    .catch(console.log);
+    await admin.auth().setCustomUserClaims(user.uid, customClaims);
+
+    const metadataRef = admin.database().ref(`metadata/${user.uid}`);
+    await metadataRef.set({ refreshTime: new Date().getTime() });
+  } catch (error) {
+    console.log(error);
+  }
 });
 
 export const addOwnerListAccess = functions.https.onRequest(
